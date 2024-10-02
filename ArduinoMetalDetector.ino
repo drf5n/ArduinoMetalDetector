@@ -44,9 +44,9 @@ unsigned long signalTimeDelta = 0;
 boolean firstSignal = true;
 unsigned long storedTimeDelta = 0;
 
-// This signal is called whenever OCR1A reaches 0
-// (Note: OCR1A is decremented on every external clock cycle)
-SIGNAL(TIMER1_COMPA_vect)
+// This signal is called whenever TCNT1 reaches OCR1A
+// (Note: TCNT1 is incremented on every external clock cycle)
+ISR(TIMER1_COMPA_vect)
 {
   unsigned long currentTime = micros();
   signalTimeDelta =  currentTime - lastSignalTime;
@@ -61,7 +61,7 @@ SIGNAL(TIMER1_COMPA_vect)
     storedTimeDelta = signalTimeDelta;
   }
 
-  // Reset OCR1A
+  // Advance OCR1A forward
   OCR1A += CYCLES_PER_SIGNAL;
 }
 
@@ -70,11 +70,11 @@ void setup()
   // Set WGM(Waveform Generation Mode) to 0 (Normal)
   TCCR1A = 0b00000000;
   
-  // Set CSS(Clock Speed Selection) to 0b111 (External clock source on T0 pin
+  // Set CSS(Clock Speed Selection) to 0b111 (External clock source on T1 pin
   // (ie, pin 5 on UNO). Clock on rising edge.)
   TCCR1B = 0b00000111;
 
-  // Enable timer compare interrupt A (ie, SIGNAL(TIMER1_COMPA_VECT))
+  // Enable timer compare interrupt A (ie, ISR(TIMER1_COMPA_VECT))
   TIMSK1 |= (1 << OCIE1A);
 
   // Set OCR1A (timer A counter) to 1 to trigger interrupt on next cycle
